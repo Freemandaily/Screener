@@ -1,5 +1,5 @@
+from ast import main
 import asyncio
-import sys
 import streamlit as st
 from datetime import datetime,timedelta
 import requests
@@ -12,7 +12,6 @@ gecko_url = 'https://api.geckoterminal.com/api/v2/networks'
 class networkPool:
     def __init__(self,id):
        self.network_id = id
-       self. pools_datas = []
 
 
     def send_request(self,to_fetch):
@@ -21,63 +20,16 @@ class networkPool:
             result = response.json()
             return result
          
-    def fetch_image_url(self,pool):
-        current_time = datetime.now()
-        new_time = current_time + timedelta(minutes=5)
-        timestamp = int(new_time.timestamp())
-        url = f"https://api.geckoterminal.com/api/v2/networks/{self.network_id}/pools/{pool}/ohlcv/minute?aggregate=1&before_timestamp={timestamp}&limit=1&currency=usd&token=base&include_empty_intervals=true"
-        response = requests
-
-    
-    async def process_pools(self,pooldata,session):
-        from datetime import datetime
-        pool_info  = { }
-        pool_info['pool_name'] = pooldata['attributes']['name']
-        pool_info['price'] = pooldata['attributes']['base_token_price_usd']
-        pool_info['age'] = pooldata['attributes']['pool_created_at']
-        pool_info['FDV'] = pooldata['attributes']['fdv_usd']
-        pool_info['24H'] = pooldata['attributes']['price_change_percentage']['h24'] + '%'
-        pool_info['pair'] = pooldata['attributes']['address']
-        pool = pool_info['pair']
-        
-        current_time = datetime.now()
-        new_time = current_time + timedelta(minutes=5)
-        timestamp = int(new_time.timestamp())
-        print(timestamp)
-        url = f"https://api.geckoterminal.com/api/v2/networks/{self.network_id}/pools/{pool}/ohlcv/minute?aggregate=1&before_timestamp={timestamp}&limit=1&currency=usd&token=base&include_empty_intervals=true"
-        async with session.get(url) as response:
-            results = await response.json()
-            print(results)
-            sys.exit()
-            token_address = results['meta']['base']['address']
-        
-       
-        url = f"https://api.geckoterminal.com/api/v2/networks/{self.network_id}/tokens/{token_address}?include=top_pools"
-        async  with session.get(url) as response:
-            Image_results = response.json()
-            data = Image_results['data']['attributes']
-            image_url = data['image_url']
-            pool_info['image_url'] = image_url
-        self.pools_datas.append(pool_info)
-
-       
-
-    async def main(self,pool_results):
-        async with aiohttp.ClientSession() as session:
-            tasks = [self.process_pools(pooldata,session) for pooldata in pool_results]
-            await asyncio.gather(*tasks)
 
     def fetch_pools(self,to_type):
         result = self.send_request(to_type)
+        #print(result['data'])
         pool_results = result['data']
-        # asyncio.run(self.main(pool_results))
         pool_datas = self.process_pools(pool_results)
-        # return self.pools_datas
         return pool_datas
 
     def process_pools(self,pool_results):
         pools_datas = []
-        
         for pool in pool_results:
             pool_info  = { }
             pool_info['pool_name'] = pool['attributes']['name']
@@ -113,11 +65,7 @@ class infopage:
                 address = results['meta']['base']['address'] # update this address on session
                 tokenSymbol = results['meta']['base']['symbol']
                 pairedToken = f"{results['meta']['base']['symbol']}/{results['meta']['quote']['symbol']}"
-                qoute_address = results['meta']['quote']['address']
-                qoute_symbol = results['meta']['quote']['symbol']
-                st.session_state['qoute_symbol'] = qoute_symbol
-                
-                st.session_state['qoute_address'] = qoute_address
+
                 st.session_state['token_address'] = address
                 st.session_state['tokenSymbol'] = tokenSymbol
                 st.session_state['pairedToken'] = pairedToken
